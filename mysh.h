@@ -12,8 +12,8 @@
 #include <signal.h>
 
 #define BUFSIZE 1024 // Buffer size for reading lines
-#define TOKEN_BUFSIZE 64 // Buffer size for tokenizing lines
-#define ARGS 128 // Maximum number of arguments
+#define TOKEN_SIZE 128 // Size for tokenizing lines
+#define ARGS 64 // Maximum number of arguments
 
 typedef struct Command {
     char **argv[ARGS];      // Argument list
@@ -22,13 +22,13 @@ typedef struct Command {
     int argc;              // Argument count
 } Command;
 
-typedef struct {
+typedef struct Job {
     Command *commands[ARGS]; // List of commands in the job
     int num_commands;        // Number of commands
     char operator[4];      // Operator such as "|", "&&", "||"
 } Job;
 
-int parse_line(char *line, Job *job); // Parse input line into a Job structure
+void parse_line(char *line, Job *job); // Parse input line into a Job structure
 int execute_job(Job *job, int prev_status); // Execute the job
 int is_builtin(const char *cmd); // Check if command is a built-in
 int execute_builtin(Command *cmd); // Execute built-in command
