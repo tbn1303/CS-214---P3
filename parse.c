@@ -6,14 +6,14 @@ void parse_line(char *line, struct Job *job){
     char *tokens[TOKEN_SIZE];
     int position_token = 0;
 
-    char *token = strtok(line, " \t\r\n");
-    while(token && position_token < TOKEN_SIZE - 1){
-        if(*token == '#'){
+    char *tok = strtok(line, " \t\r\n");
+    while(tok && position_token < TOKEN_SIZE - 1){
+        if(*tok == '#'){
             break; // Ignore comments
         }
         
-        token[position_token++] = token;
-        token = strtok(NULL, " \t\r\n");
+        tokens[position_token++] = tok;
+        tok = strtok(NULL, " \t\r\n");
     }
 
     tokens[position_token] = NULL;
@@ -42,7 +42,7 @@ void parse_line(char *line, struct Job *job){
     for(int i = 0; i < position_token; i++){
         if(strcmp(tokens[i], "<") == 0){
             if(i + 1 < position_token){
-                cmd->input_redir = tokens[++i];
+                cmd->input_redir = strdup(tokens[++i]);
             }
 
             else {
@@ -66,7 +66,7 @@ void parse_line(char *line, struct Job *job){
             }
         }
 
-        else if(strcmp(token[i], '|') == 0){
+        else if(strcmp(tokens[i], '|') == 0){
             cmd->argv[cmd->argc] = NULL; // Null-terminate current command arguments
             job->commands[job->num_commands++] = cmd; // Add command to job
 
@@ -83,7 +83,7 @@ void parse_line(char *line, struct Job *job){
     }
 
     // Add the last command
-    if(cmd->argc > 0 && cmd->input_redir && cmd->output_redir){
+    if(cmd->argc > 0){
         cmd->argv[cmd->argc] = NULL; // Null-terminate last command arguments
         job->commands[job->num_commands++] = cmd;
     }
@@ -91,4 +91,24 @@ void parse_line(char *line, struct Job *job){
     else {
         free(cmd); // Free if no arguments were added
     }
+}
+
+void free_job(struct Job *job){
+    for(int i = 0; i < job->num_commands; i++){
+        Command *cmd = job->commands[i];
+
+        if(!cmd) continue;
+
+        for(int j = 0; j < cmd->argc; j++){
+            free(cmd->argv[j]); // Free each argument
+        }
+
+        free(cmd->input_redir); // Free input redirection file
+        free(cmd->output_redir); // Free output redirection file
+        free(cmd); // Free command structure
+        job->commands[i] = NULL; // Clear command pointer
+    }
+
+    job->num_commands = 0; // Reset job command count
+    job->operator[0] = '\0'; // Clear operator
 }
