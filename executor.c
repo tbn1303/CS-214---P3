@@ -16,7 +16,7 @@ static char *executable_path(const char *command) {
         }
     }
 
-    const char *default_dirs[] = {"usr/local/bin", "/usr/bin", "bin", NULL}; // Default directories
+    const char *default_dirs[] = {"/usr/local/bin", "/usr/bin", "/bin", NULL}; // Default directories
     for (int i = 0; default_dirs[i] != NULL; i++) {
         char full_path[PATH_MAX];
         snprintf(full_path, sizeof(full_path), "/%s/%s", default_dirs[i], command);
@@ -40,12 +40,12 @@ int execute_builtin(Command *cmd) {
     if (strcmp(cmd->argv[0], "cd") == 0) {
         if (cmd->argv[1] == NULL) {
             fprintf(stderr, "cd: expected argument\n");
-            return -1;
+            return 1;
         }
 
         if (chdir(cmd->argv[1]) != 0) {
             perror("cd");
-            return -1;
+            return 1;
         }
 
         return 0;
@@ -55,5 +55,5 @@ int execute_builtin(Command *cmd) {
         exit(0);
     }
 
-    return -1; // Not a built-in command
+    return 1; // Not a built-in command
 }
