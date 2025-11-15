@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include "mysh.h"
 
+const char *bultin_commands[] = {"cd", "exit", "exit", "die", NULL};
+
 static char *executable_path(const char *command) {
     if (strchr(command, '/')) {
         // Command contains a slash, treat as a path
@@ -29,13 +31,39 @@ static char *executable_path(const char *command) {
 }
 
 int is_builtin(Command *cmd) {
-    if (strcmp(cmd->argv[0], "cd") == 0 || strcmp(cmd->argv[0], "exit") == 0) {
-        return 1; // It's a built-in command
+    for (int i = 0; bultin_commands[i] != NULL; i++) {
+        if (strcmp(cmd->argv[0], bultin_commands[i]) == 0) {
+            return 1; // Is a built-in command
+        }
     }
 
     return 0; // Not a built-in command
 }
 
+// Helper function to handle I/O redirection
+static void redirect_io(Command *cmd) {
+    if (cmd->input_redir != NULL) {
+        int input_fd = open(cmd->input_redir, O_RDONLY);
+        if (input_fd < 0) {
+            perror("open input redirection");
+            exit(EXIT_FAILURE);
+        }
+        dup2(input_fd, STDIN_FILENO);
+        close(input_fd);
+    }
+
+    if (cmd->output_redir != NULL) {
+        int output_fd = open(cmd->output_redir, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (output_fd < 0) {
+            perror("open output redirection");
+            exit(EXIT_FAILURE);
+        }
+        dup2(output_fd, STDOUT_FILENO);
+        close(output_fd);
+    }
+}
+
+// Execute a built-in command
 int execute_builtin(Command *cmd) {
     if (strcmp(cmd->argv[0], "cd") == 0) {
         if (cmd->argv[1] == NULL) {
