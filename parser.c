@@ -1,4 +1,7 @@
 #include "mysh.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void parse_line(char *line, struct Job *job){
     memset(job, 0, sizeof(*job)); // Initialize job structure
