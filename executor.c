@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include "mysh.h"
 
-const char *bultin_commands[] = {"cd", "exit", "exit", "die", NULL};
+const char *bultin_commands[] = {"cd", "cwd", "exit", "die", NULL};
 
 static char *executable_path(const char *command) {
     if (strchr(command, '/')) {
@@ -64,24 +64,125 @@ static void redirect_io(Command *cmd) {
 }
 
 // Execute a built-in command
-int execute_builtin(Command *cmd) {
-    if (strcmp(cmd->argv[0], "cd") == 0) {
-        if (cmd->argv[1] == NULL) {
-            fprintf(stderr, "cd: expected argument\n");
-            return 1;
+int execute_builtin(Command *cmd, int parent_stdout) {
+    for (int i = 0; bultin_commands[i] != NULL; i++) {
+        if (strcmp(cmd->argv[0], bultin_commands[i]) == 0) {
+            // Handle cd command
+            if (strcmp(cmd->argv[0], "cd") == 0) {
+                if(parent_stdout) return 0; // Do nothing if in a subshell
+
+                if (cmd->argv[1] == NULL) {
+                    fprintf(stderr, "cd: missing argument\n");
+                    return 1;
+                }
+
+                if (chdir(cmd->argv[1]) != 0) {
+                    perror("cd");
+                    return 1;
+                }
+
+                return 0;
+            } 
+
+            // Handle cwd command
+            if(strcmp(cmd->argv[0], "cwd") == 0) {
+                if(parent_stdout) return 0; // Do nothing if in a subshell
+
+                char cwd[PATH_MAX];
+                if (getcwd(cwd, sizeof(cwd)) != NULL) {
+                    printf("%s\n", cwd);
+                } 
+                
+                else {
+                    perror("getcwd");
+                    return 1;
+                }
+
+                return 0;
+            }
+            
+            // Handle exit/die commands
+            else if (strcmp(cmd->argv[0], "exit") == 0 || strcmp(cmd->argv[0], "die") == 0) {
+                if(parent_stdout) exit(1); // Exit subshell if in a subshell
+
+                return 0; // Built-in handled in main loop
+            }
         }
 
-        if (chdir(cmd->argv[1]) != 0) {
-            perror("cd");
-            return 1;
+        return 0; // Built-in command executed
+    }
+
+    return 1; // Unknown built-in command
+}
+
+// Helper function to set up pipes for a command in a pipeline
+static void pipe_handler(int index, int num_commands, int *pipe_fds) {
+    if (index > 0) {
+        // Not the first command, redirect stdin to read end of previous pipe
+        dup2(pipe_fds[(index - 1) * 2], STDIN_FILENO);
+    }
+
+    if (index < num_commands - 1) {
+        // Not the last command, redirect stdout to write end of current pipe
+        dup2(pipe_fds[index * 2 + 1], STDOUT_FILENO);
+    }
+}
+
+// Helper function to close all pipe file descriptors
+static void close_pipes(int num_commands, int *pipe_fds) {
+    for (int i = 0; i < (num_commands - 1) * 2; i++) {
+        close(pipe_fds[i]);
+    }
+}
+
+int execute_job(Job *job, int parent_stdout) {
+    int num_commands = job->num_commands;
+    int pipe_fds[(num_commands - 1) * 2];
+
+    // Create pipes for inter-process communication
+    for (int i = 0; i < num_commands - 1; i++) {
+        if (pipe(pipe_fds + i * 2) < 0) {
+            perror("pipe");
+            exit(EXIT_FAILURE);
         }
-
-        return 0;
-    }
-    
-    else if (strcmp(cmd->argv[0], "exit") == 0) {
-        exit(0);
     }
 
-    return 1; // Not a built-in command
+    for (int i = 0; i < num_commands; i++) {
+        Command *cmd = &job->commands[i];
+
+        pid_t pid = fork();
+        if (pid < 0) {
+            perror("fork");
+            exit(EXIT_FAILURE);
+        } else if (pid == 0) {
+            // Child process
+            pipe_handler(i, num_commands, pipe_fds);
+            redirect_io(cmd);
+
+            if (is_builtin(cmd)) {
+                execute_builtin(cmd, parent_stdout || num_commands > 1);
+                exit(0);
+            } else {
+                char *exec_path = executable_path(cmd->argv[0]);
+                if (exec_path == NULL) {
+                    fprintf(stderr, "%s: command not found\n", cmd->argv[0]);
+                    exit(EXIT_FAILURE);
+                }
+                execv(exec_path, cmd->argv);
+                perror("execv");
+                free(exec_path);
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+
+    // Parent process
+    close_pipes(num_commands, pipe_fds);
+
+    // Wait for all child processes to finish
+    for (int i = 0; i < num_commands; i++) {
+        wait(NULL);
+    }
+
+    return 0;
 }
