@@ -14,6 +14,7 @@
 #define BUFSIZE 1024 // Buffer size for reading lines
 #define TOKEN_SIZE 128 // Size for tokenizing lines
 #define ARGS 64 // Maximum number of arguments
+#define MAX_PATH 4096 // Maximum path length
 
 typedef struct Command {
     char **argv[ARGS];      // Argument list

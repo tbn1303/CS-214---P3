@@ -16,20 +16,44 @@ static char *executable_path(const char *command) {
         }
     }
 
-    char *path_env = getenv("PATH");
-    if (!path_env) return NULL;
-
-    char *path_copy = strdup(path_env);
-    char *token = strtok(path_copy, ":");
-    while (token) {
+    const char *default_dirs[] = {"usr/local/bin", "/usr/bin", "bin", NULL}; // Default directories
+    for (int i = 0; default_dirs[i] != NULL; i++) {
         char full_path[PATH_MAX];
-        snprintf(full_path, sizeof(full_path), "%s/%s", token, command);
+        snprintf(full_path, sizeof(full_path), "/%s/%s", default_dirs[i], command);
         if (access(full_path, X_OK) == 0) {
-            free(path_copy);
             return strdup(full_path);
         }
-        token = strtok(NULL, ":");
     }
-    free(path_copy);
-    return NULL;
+
+    return NULL; // Command not found
+}
+
+int is_builtin(Command *cmd) {
+    if (strcmp(cmd->argv[0], "cd") == 0 || strcmp(cmd->argv[0], "exit") == 0) {
+        return 1; // It's a built-in command
+    }
+
+    return 0; // Not a built-in command
+}
+
+int execute_builtin(Command *cmd) {
+    if (strcmp(cmd->argv[0], "cd") == 0) {
+        if (cmd->argv[1] == NULL) {
+            fprintf(stderr, "cd: expected argument\n");
+            return -1;
+        }
+
+        if (chdir(cmd->argv[1]) != 0) {
+            perror("cd");
+            return -1;
+        }
+
+        return 0;
+    }
+    
+    else if (strcmp(cmd->argv[0], "exit") == 0) {
+        exit(0);
+    }
+
+    return -1; // Not a built-in command
 }
