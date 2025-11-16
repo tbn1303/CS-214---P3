@@ -21,7 +21,7 @@ static char *executable_path(const char *command) {
     const char *default_dirs[] = {"/usr/local/bin", "/usr/bin", "/bin", NULL}; // Default directories
     for (int i = 0; default_dirs[i] != NULL; i++) {
         char full_path[PATH_MAX];
-        snprintf(full_path, sizeof(full_path), "/%s/%s", default_dirs[i], command);
+        snprintf(full_path, sizeof(full_path), "%s/%s", default_dirs[i], command);
         if (access(full_path, X_OK) == 0) {
             return strdup(full_path);
         }
@@ -33,32 +33,36 @@ static char *executable_path(const char *command) {
 int is_builtin(Command *cmd) {
     for (int i = 0; bultin_commands[i] != NULL; i++) {
         if (strcmp(cmd->argv[0], bultin_commands[i]) == 0) {
-            return 1; // Is a built-in command
+            return 0; // Is a built-in command
         }
     }
 
-    return 0; // Not a built-in command
+    return 1; // Not a built-in command
 }
 
 // Helper function to handle I/O redirection
 static void redirect_io(Command *cmd) {
     if (cmd->input_redir != NULL) {
-        int input_fd = open(cmd->input_redir, O_RDONLY);
+        int input_fd = open(cmd->input_redir, O_RDONLY); // Open input file for reading
+
         if (input_fd < 0) {
             perror("open input redirection");
             exit(EXIT_FAILURE);
         }
-        dup2(input_fd, STDIN_FILENO);
+
+        dup2(input_fd, STDIN_FILENO); // Redirect stdin to input file
         close(input_fd);
     }
 
     if (cmd->output_redir != NULL) {
-        int output_fd = open(cmd->output_redir, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        int output_fd = open(cmd->output_redir, O_WRONLY | O_CREAT | O_TRUNC, 0644); // Open output file for writing
+
         if (output_fd < 0) {
             perror("open output redirection");
             exit(EXIT_FAILURE);
         }
-        dup2(output_fd, STDOUT_FILENO);
+
+        dup2(output_fd, STDOUT_FILENO); // Redirect stdout to output file
         close(output_fd);
     }
 }
@@ -147,14 +151,23 @@ int execute_job(Job *job, int parent_stdout) {
         }
     }
 
+    // Execute each command in the job
     for (int i = 0; i < num_commands; i++) {
         Command *cmd = &job->commands[i];
 
+        if (num_commands == 1 && is_builtin(cmd) && parent_stdout) {
+            // Execute built-in command in the parent process if it's the only command
+            return execute_builtin(cmd, 1);
+        }
+
         pid_t pid = fork();
+
         if (pid < 0) {
             perror("fork");
             exit(EXIT_FAILURE);
-        } else if (pid == 0) {
+        } 
+        
+        else if (pid == 0) {
             // Child process
             pipe_handler(i, num_commands, pipe_fds);
             redirect_io(cmd);
@@ -162,12 +175,16 @@ int execute_job(Job *job, int parent_stdout) {
             if (is_builtin(cmd)) {
                 execute_builtin(cmd, parent_stdout || num_commands > 1);
                 exit(0);
-            } else {
+            }
+            
+            else {
                 char *exec_path = executable_path(cmd->argv[0]);
+
                 if (exec_path == NULL) {
                     fprintf(stderr, "%s: command not found\n", cmd->argv[0]);
                     exit(EXIT_FAILURE);
                 }
+                
                 execv(exec_path, cmd->argv);
                 perror("execv");
                 free(exec_path);
@@ -184,5 +201,5 @@ int execute_job(Job *job, int parent_stdout) {
         wait(NULL);
     }
 
-    return 0;
+    return 0; // Job executed successfully
 }
