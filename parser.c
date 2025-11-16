@@ -69,7 +69,7 @@ void parse_line(char *line, struct Job *job){
             }
         }
 
-        else if(strcmp(tokens[i], '|') == 0){
+        else if(strcmp(tokens[i], "|") == 0){
             cmd->argv[cmd->argc] = NULL; // Null-terminate current command arguments
             job->commands[job->num_commands++] = cmd; // Add command to job
 
