@@ -32,7 +32,7 @@ typedef struct Job {
 void parse_line(char *line, Job *job); // Parse input line into a Job structure
 void free_job(Job *job); // Free memory allocated for a Job structure
 int execute_job(Job *job, int prev_status); // Execute the job
-int is_builtin(const char *cmd); // Check if command is a built-in
-int execute_builtin(Command *cmd); // Execute built-in command
+int is_builtin(Command *cmd); // Check if command is a built-in
+int execute_builtin(Command *cmd, int parent_stdout); // Execute built-in command
 
 #endif
