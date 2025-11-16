@@ -20,7 +20,7 @@ static char *executable_path(const char *command) {
 
     const char *default_dirs[] = {"/usr/local/bin", "/usr/bin", "/bin", NULL}; // Default directories
     for (int i = 0; default_dirs[i] != NULL; i++) {
-        char full_path[PATH_MAX];
+        char full_path[MAX_PATH];
         snprintf(full_path, sizeof(full_path), "%s/%s", default_dirs[i], command);
         if (access(full_path, X_OK) == 0) {
             return strdup(full_path);
@@ -92,7 +92,7 @@ int execute_builtin(Command *cmd, int parent_stdout) {
             if(strcmp(cmd->argv[0], "cwd") == 0) {
                 if(parent_stdout) return 0; // Do nothing if in a subshell
 
-                char cwd[PATH_MAX];
+                char cwd[MAX_PATH];
                 if (getcwd(cwd, sizeof(cwd)) != NULL) {
                     printf("%s\n", cwd);
                 } 
