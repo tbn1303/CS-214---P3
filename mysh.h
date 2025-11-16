@@ -17,7 +17,7 @@
 #define MAX_PATH 4096 // Maximum path length
 
 typedef struct Command {
-    char **argv[ARGS];      // Argument list
+    char *argv[ARGS];      // Argument list
     char *input_redir;     // Input redirection file
     char *output_redir;    // Output redirection file
     int argc;              // Argument count
@@ -26,10 +26,11 @@ typedef struct Command {
 typedef struct Job {
     Command *commands[ARGS]; // List of commands in the job
     int num_commands;        // Number of commands
-    char operator[4];      // Operator such as "|", "&&", "||"
+    char operator[4];      // Operator such as "and", "or" or empty
 } Job;
 
 void parse_line(char *line, Job *job); // Parse input line into a Job structure
+void free_job(Job *job); // Free memory allocated for a Job structure
 int execute_job(Job *job, int prev_status); // Execute the job
 int is_builtin(const char *cmd); // Check if command is a built-in
 int execute_builtin(Command *cmd); // Execute built-in command
