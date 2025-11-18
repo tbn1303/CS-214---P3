@@ -148,7 +148,7 @@ int execute_builtin(Command *cmd, int parent_stdout) {
 }
 
 // Helper function to set up pipes for a command in a pipeline
-static void pipe_handler(int index, int num_commands, int *pipe_fds) {
+static void pipe_handler(int index, int num_commands, int pipe_fds[MAX_COMMANDS*2]) {
     if (index > 0) {
         // Not the first command, redirect stdin to read end of previous pipe
         dup2(pipe_fds[(index - 1) * 2], STDIN_FILENO);
@@ -161,7 +161,7 @@ static void pipe_handler(int index, int num_commands, int *pipe_fds) {
 }
 
 // Helper function to close all pipe file descriptors
-static void close_pipes(int num_commands, int *pipe_fds) {
+static void close_pipes(int num_commands, int pipe_fds[MAX_COMMANDS*2]) {
     for (int i = 0; i < (num_commands - 1) * 2; i++) {
         close(pipe_fds[i]);
     }
@@ -169,7 +169,12 @@ static void close_pipes(int num_commands, int *pipe_fds) {
 
 int execute_job(Job *job, int parent_stdout) {
     int num_commands = job->num_commands;
-    int pipe_fds[(num_commands - 1) * 2];
+    if (num_commands > MAX_COMMANDS) {
+        fprintf(stderr, "Error: too many commands in pipeline (max %d)\n", MAX_COMMANDS);
+        return 1;
+    }
+
+    int pipe_fds[MAX_COMMANDS*2];  // Fixed-size array for pipes
 
     // Create pipes for inter-process communication
     for (int i = 0; i < num_commands - 1; i++) {
@@ -194,7 +199,6 @@ int execute_job(Job *job, int parent_stdout) {
             perror("fork");
             exit(EXIT_FAILURE);
         } 
-        
         else if (pid == 0) {
             // Child process
             pipe_handler(i, num_commands, pipe_fds);
