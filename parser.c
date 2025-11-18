@@ -81,6 +81,11 @@ void parse_line(char *line, struct Job *job){
 
             // Create new command for the next segment
             cmd = malloc(sizeof(Command));
+            if(!cmd){
+                perror("Error malloc");
+                free(cmd);
+            }
+            
             cmd->argc = 0;
             cmd->input_redir = NULL;
             cmd->output_redir = NULL;
