@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include "mysh.h"
 
 const char *bultin_commands[] = {"cd", "cwd", "exit", "die", NULL};

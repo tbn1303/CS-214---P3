@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <limits.h>
 
 #define BUFSIZE 128 // Buffer size for reading lines
 #define TOKEN_SIZE 128 // Size for tokenizing lines
