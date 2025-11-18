@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 #include "mysh.h"
 
-const char *bultin_commands[] = {"cd", "cwd", "exit", "die", NULL};
+const char *bultin_commands[] = {"cd", "pwd", "which", "exit", "die", NULL};
 
 static char *executable_path(const char *command) {
     if (strchr(command, '/')) {
