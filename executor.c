@@ -174,6 +174,9 @@ int execute_job(Job *job, int parent_stdout) {
         return 1;
     }
 
+    extern int shell_signal_exit;
+    extern int shell_exit_status;
+
     int pipe_fds[MAX_COMMANDS*2];  // Fixed-size array for pipes
 
     // Create pipes for inter-process communication
@@ -182,6 +185,44 @@ int execute_job(Job *job, int parent_stdout) {
             perror("pipe");
             exit(EXIT_FAILURE);
         }
+    }
+
+        // execute only one built in command in parent, tepmp use dup2()
+    if (num_commands == 1 && is_builtin(job->commands[0])) {
+        Command *c = job->commands[0];
+        int saved_in = -1, saved_out = -1;
+        if (c->input_redir) {
+            int infd = open(c->input_redir, O_RDONLY);
+            if (infd < 0) { 
+                perror(c->input_redir); 
+                return 1; 
+            }
+            saved_in = dup(STDIN_FILENO);
+            dup2(infd, STDIN_FILENO);
+            close(infd);
+        }
+        if (c->output_redir) {
+            int outfd = open(c->output_redir, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+            if (outfd < 0) { 
+                perror(c->output_redir); 
+                if (saved_in != -1) { 
+                    dup2(saved_in, STDIN_FILENO); 
+                    close(saved_in);
+                } 
+                return 1; 
+            }
+            saved_out = dup(STDOUT_FILENO);
+            dup2(outfd, STDOUT_FILENO);
+            close(outfd);
+        }
+        int r = execute_builtin(c, 1);
+        if (saved_in != -1) { 
+            dup2(saved_in, STDIN_FILENO); 
+            close(saved_in); 
+        }
+        if (saved_out != -1) { dup2(saved_out, STDOUT_FILENO); close(saved_out); }
+        // if builtin set shell_signal_exit. main will exit, 0 or 1 for sucess or fail
+        return (r == 0) ? 0 : 1;
     }
 
     // Execute each command in the job
@@ -236,4 +277,5 @@ int execute_job(Job *job, int parent_stdout) {
 
     return 0; // Job executed successfully
 }
+
 
