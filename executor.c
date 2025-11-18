@@ -178,7 +178,7 @@ int execute_job(Job *job, int parent_stdout) {
 
     // Execute each command in the job
     for (int i = 0; i < num_commands; i++) {
-        Command *cmd = &job->commands[i];
+        Command *cmd = job->commands[i];
 
         if (num_commands == 1 && is_builtin(cmd) && parent_stdout) {
             // Execute built-in command in the parent process if it's the only command
