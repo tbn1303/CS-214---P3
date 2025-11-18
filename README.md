@@ -3,9 +3,11 @@
 Project 3: My Shell
 
 Author: Thai Nguyen
+
 NetID: tbn22
 
 Author: Zachary Adam
+
 NetID: zea6
 
 
