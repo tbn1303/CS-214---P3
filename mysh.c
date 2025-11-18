@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -87,7 +88,7 @@ char *lines_next(LINES *l){
     return line;
 }
 
-int main(int argc, char *argv[]) {
+/*int main(int argc, char *argv[]) {
     if(argc == 1){
         interactive_mode = 1; // Non-interactive mode
     }
@@ -104,7 +105,33 @@ int main(int argc, char *argv[]) {
         close(fd);
     }
 
-    signal(SIGINT, signal_handler);
+    signal(SIGINT, signal_handler); */
+
+    int main(int argc, char *argv[]) {
+    if (argc > 2) {
+         fprintf(stderr, "Usage: %s [batchfile]\n", argv[0]); return EXIT_FAILURE; 
+        }
+    if (argc == 2) {
+        int fd = open(argv[1], O_RDONLY);
+        if (fd < 0) { perror(argv[1]); return EXIT_FAILURE; }
+        if (dup2(fd, STDIN_FILENO) < 0) {
+             perror("dup2"); 
+             close(fd); 
+             return EXIT_FAILURE; 
+            }
+        close(fd);
+    }
+
+    interactive_mode = isatty(STDIN_FILENO);
+
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    if (sigaction(SIGINT, &sa, NULL) < 0) {
+         perror("sigaction"); return EXIT_FAILURE; 
+        }
 
     LINES line_reader;
     lines_init(&line_reader, STDIN_FILENO);
