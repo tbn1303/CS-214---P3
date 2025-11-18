@@ -11,7 +11,9 @@
 
 int interactive_mode = 0; // Global flag for interactive mode
 
-void signal_handler(int signo) {
+void signal_handler(int signo) {        
+    (void)signo; // Unused parameter
+
     if (interactive_mode) {
         write(STDOUT_FILENO, "\n", 1);
         write(STDOUT_FILENO, PROMPT, strlen(PROMPT));
