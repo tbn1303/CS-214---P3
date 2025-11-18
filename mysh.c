@@ -15,7 +15,6 @@ void signal_handler(int signo) {
     if (interactive_mode) {
         write(STDOUT_FILENO, "\n", 1);
         write(STDOUT_FILENO, PROMPT, strlen(PROMPT));
-        fflush(stdout);
     }
 }
 
@@ -87,14 +86,23 @@ char *lines_next(LINES *l){
 }
 
 int main(int argc, char *argv[]) {
-    interactive_mode = isatty(STDIN_FILENO);
+    if(argc == 1){
+        interactive_mode = 1; // Non-interactive mode
+    }
+    
+    else {
+        interactive_mode = 0; // Interactive mode
+        int fd = open(argv[1], O_RDONLY);
+        if(fd < 0){
+            perror("open");
+            exit(EXIT_FAILURE);
+        }
 
-    // Set up signal handler for SIGINT
-    struct sigaction sa;
-    sa.sa_handler = signal_handler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-    sigaction(SIGINT, &sa, NULL);
+        dup2(fd, STDIN_FILENO);
+        close(fd);
+    }
+
+    signal(SIGINT, signal_handler);
 
     LINES line_reader;
     lines_init(&line_reader, STDIN_FILENO);
