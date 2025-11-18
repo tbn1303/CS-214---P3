@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -108,9 +109,16 @@ int execute_builtin(Command *cmd, int parent_stdout) {
             
             // Handle exit/die commands
             else if (strcmp(cmd->argv[0], "exit") == 0 || strcmp(cmd->argv[0], "die") == 0) {
-                if(parent_stdout) exit(1); // Exit subshell if in a subshell
-
-                return 0; // Built-in handled in main loop
+                if(!parent_stdout) {
+                    printf("mysh: exiting\n");
+                    fflush(stdout);
+                }
+                
+                if (strcmp(cmd->argv[0], "exit") == 0)
+                    exit(0);          // main shell exits successfully
+                
+                else
+                    exit(EXIT_FAILURE); // main shell exits with failure
             }
         }
 
