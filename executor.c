@@ -198,9 +198,10 @@ int execute_job(Job *job, int parent_stdout) {
         if (pid < 0) {
             perror("fork");
             exit(EXIT_FAILURE);
-        } 
-        else if (pid == 0) {
-            // Child process
+        }
+
+        // Child process
+        if (pid == 0) {
             pipe_handler(i, num_commands, pipe_fds);
             redirect_io(cmd);
 
@@ -235,3 +236,4 @@ int execute_job(Job *job, int parent_stdout) {
 
     return 0; // Job executed successfully
 }
+
