@@ -83,7 +83,7 @@ void parse_line(char *line, struct Job *job){
             cmd = malloc(sizeof(Command));
             if(!cmd){
                 perror("Error malloc");
-                free(cmd);
+                exit(EXIT_FAILURE);
             }
             
             cmd->argc = 0;
