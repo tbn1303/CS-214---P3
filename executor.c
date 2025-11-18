@@ -49,6 +49,9 @@ static char *executable_path(const char *command) {
 }
 
 int is_builtin(Command *cmd) {
+    if (!cmd || cmd->argc == 0) {
+        return 0; // Not a built-in if command is NULL or has no arguments
+    }
     for (int i = 0; bultin_commands[i] != NULL; i++) {
         if (strcmp(cmd->argv[0], bultin_commands[i]) == 0) {
             return 1; // Command is a built-in
