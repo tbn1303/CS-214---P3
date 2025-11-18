@@ -12,21 +12,37 @@ const char *bultin_commands[] = {"cd", "cwd", "exit", "die", NULL};
 
 static char *executable_path(const char *command) {
     if (strchr(command, '/')) {
+        char *path = malloc(strlen(command) + 1);
+
+        if(!path) return NULL; // Memory allocation failed
+
+        strcpy(path, command);
+
         // Command contains a slash, treat as a path
         if (access(command, X_OK) == 0) {
-            return strdup(command);
-        } else {
+            return path;
+        }
+        
+        else {
+            free(path);
             return NULL;
         }
     }
 
     const char *default_dirs[] = {"/usr/local/bin", "/usr/bin", "/bin", NULL}; // Default directories
     for (int i = 0; default_dirs[i] != NULL; i++) {
-        char full_path[MAX_PATH];
-        snprintf(full_path, sizeof(full_path), "%s/%s", default_dirs[i], command);
+        int len = strlen(default_dirs[i]) + strlen(command) + 2; // +2 for '/' and null terminator
+        char *full_path = malloc(len); // Allocate memory for full path
+
+        if(!full_path) return NULL; // Memory allocation failed
+
+        snprintf(full_path, len, "%s/%s", default_dirs[i], command);
+
         if (access(full_path, X_OK) == 0) {
-            return strdup(full_path);
+            return full_path;
         }
+
+        free(full_path);
     }
 
     return NULL; // Command not found
@@ -35,11 +51,11 @@ static char *executable_path(const char *command) {
 int is_builtin(Command *cmd) {
     for (int i = 0; bultin_commands[i] != NULL; i++) {
         if (strcmp(cmd->argv[0], bultin_commands[i]) == 0) {
-            return 0; // Is a built-in command
+            return 1; // Command is a built-in
         }
     }
 
-    return 1; // Not a built-in command
+    return 0; // Command is not a built-in
 }
 
 // Helper function to handle I/O redirection
