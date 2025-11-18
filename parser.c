@@ -1,7 +1,7 @@
-#include "mysh.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "mysh.h"
 
 void parse_line(char *line, struct Job *job){
     memset(job, 0, sizeof(*job)); // Initialize job structure
@@ -45,7 +45,10 @@ void parse_line(char *line, struct Job *job){
     for(int i = 0; i < position_token; i++){
         if(strcmp(tokens[i], "<") == 0){
             if(i + 1 < position_token){
-                cmd->input_redir = strdup(tokens[++i]);
+                cmd->input_redir = malloc(strlen(tokens[i + 1]) + 1); // Allocate memory for input redirection file
+
+                if (cmd->input_redir)
+                    strcpy(cmd->input_redir, tokens[++i]); // Set input redirection file
             }
 
             else {
@@ -58,7 +61,10 @@ void parse_line(char *line, struct Job *job){
         
         else if(strcmp(tokens[i], ">") == 0){
             if(i + 1 < position_token){
-                cmd->output_redir = strdup(tokens[++i]);
+                cmd->output_redir = malloc(strlen(tokens[i + 1]) + 1); // Allocate memory for output redirection file
+
+                if (cmd->output_redir) 
+                    strcpy(cmd->output_redir, tokens[++i]); // Set output redirection file
             }
 
             else {
@@ -81,7 +87,12 @@ void parse_line(char *line, struct Job *job){
         }
         
         else {
-            cmd->argv[cmd->argc++] = strdup(tokens[i]);
+            cmd->argv[cmd->argc] = malloc(strlen(tokens[i]) + 1); // Allocate memory for argument
+
+            if (cmd->argv[cmd->argc]) 
+                strcpy(cmd->argv[cmd->argc], tokens[i]); // Set argument
+
+            cmd->argc++; // Increment argument count
         }
     }
 
