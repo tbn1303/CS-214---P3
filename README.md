@@ -2,10 +2,10 @@
 
 Project 3: My Shell
 
-Author: Thai Nguyen 
+Author: Thai Nguyen <br>
 NetID: tbn22
 
-Author: Zachary Adam
+Author: Zachary Adam <br>
 NetID: zea6
 
 -----------------------------------------------------------------------------------------------------
@@ -18,8 +18,8 @@ The my shell program should execute the commands of a batch file without interac
 
 Included is a file called batch1.txt. This file only contains the commands: 
 
-echo hello
-echo world
+echo hello <br>
+echo world <br>
 exit
 
 and if run with the myshell like so:
@@ -28,7 +28,7 @@ and if run with the myshell like so:
 
 The output should be:
 
-echo
+hello <br>
 world
 
 no other included messages or prompts. 
@@ -39,7 +39,7 @@ Test: Testing die command in batch, and making sure nothing is ran after the die
 
 In the file batch-die-test.txt the only commands contained are:
 
-die some problem, finished
+die some problem, finished <br>
 echo this-should-not-run
 
 When run with the my shell program the same way as the first batch file was:
@@ -58,20 +58,18 @@ Test: Running built in commands in interactive mode.
 
 when the program is ran without any additional arguments it should run in interactive mode and initially display the welcome message and prompt:
 
-Welcome to my shell!
+Welcome to my shell! <br>
 mysh> 
 
 When inputting a command such as exit or die that exits the shell it should print either the exit message from die and exit with exit code (1) or solely a goodbye message with no other message:
 
-mysh> exit
+mysh> exit <br>
 Exiting my shell.
 
 or 
 
-mysh> die example message
-
-example message 
-
+mysh> die example message <br>
+example message <br>
 Exiting my shell.
 
 -----------------------------------------------------------------------------------------------------
