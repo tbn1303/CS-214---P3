@@ -180,4 +180,3 @@ char *lines_next(LINES *l){
 
     return shell_exit_status;
 }
-
