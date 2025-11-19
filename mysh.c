@@ -12,12 +12,15 @@
 
 int interactive_mode = 0; // Global flag for interactive mode
 
+int shell_signal_exit = 0; // Flag to indicate shell should exit
+int shell_exit_status = EXIT_SUCCESS; // Exit status to return when shell exits
+
 void signal_handler(int signo) {        
     (void)signo; // Unused parameter
 
     if (interactive_mode) {
         write(STDOUT_FILENO, "\n", 1);
-        write(STDOUT_FILENO, PROMPT, strlen(PROMPT));
+        //write(STDOUT_FILENO, PROMPT, strlen(PROMPT));
     }
 }
 
@@ -124,6 +127,7 @@ char *lines_next(LINES *l){
 
     interactive_mode = isatty(STDIN_FILENO);
 
+
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = signal_handler;
@@ -137,11 +141,19 @@ char *lines_next(LINES *l){
     lines_init(&line_reader, STDIN_FILENO);
 
     char *line;
-    while ((line = lines_next(&line_reader)) != NULL) {
+
+    if(interactive_mode) {
+        printf("Welcome to my shell! \n");
+    }
+    while (1) {
         if (interactive_mode) {
             printf("%s", PROMPT);
             fflush(stdout);
         }
+
+        line = lines_next(&line_reader);
+        if (line == NULL)
+            break;
 
         Job job;
         memset(&job, 0, sizeof(Job));
@@ -149,11 +161,22 @@ char *lines_next(LINES *l){
 
         execute_job(&job, 0);
 
+        if (shell_signal_exit) {
+            free(line);
+            free_job(&job);
+            break;
+        }
+
         free(line);
         free_job(&job);
     }
 
     lines_destroy(&line_reader);
 
-    return 0;
+    if (interactive_mode){
+        printf("Exiting my shell. \n");
+        fflush(stdout);
+    }
+
+    return shell_exit_status;
 }
