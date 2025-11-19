@@ -362,5 +362,3 @@ int execute_job(Job *job, int parent_stdout) {
 
     return last_status;
 }
-
-
