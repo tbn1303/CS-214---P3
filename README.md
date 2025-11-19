@@ -2,10 +2,10 @@
 
 Project 3: My Shell
 
-Author: Thai Nguyen
+Author: Thai Nguyen \n
 NetID: tbn22
 
-Author: Zachary Adam
+Author: Zachary Adam \n 
 NetID: zea6
 
 -----------------------------------------------------------------------------------------------------
