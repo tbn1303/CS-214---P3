@@ -53,7 +53,12 @@ void parse_line(char *line, struct Job *job){
 
             else {
                 // Handle error: no file specified for input redirection
-                fprintf(stderr, "Error: No input file specified for redirection\n");
+                fprintf(stderr, "Error: No input/output file specified for redirection\n");
+
+                for (int j = 0; j < cmd->argc; j++){
+                    free(cmd->argv[j]);
+                }
+                
                 free(cmd);
                 return;
             }
@@ -69,7 +74,12 @@ void parse_line(char *line, struct Job *job){
 
             else {
                 // Handle error: no file specified for output redirection
-                fprintf(stderr, "Error: No output file specified for redirection\n");
+                fprintf(stderr, "Error: No input/output file specified for redirection\n");
+
+                for (int j = 0; j < cmd->argc; j++){
+                    free(cmd->argv[j]);
+                }
+
                 free(cmd);
                 return;
             }
@@ -78,6 +88,11 @@ void parse_line(char *line, struct Job *job){
         // Discard "and" or "or" appearing anywhere except tokens[0]
         else if ((strcmp(tokens[i], "and") == 0 || strcmp(tokens[i], "or") == 0) && i != 0) {
             fprintf(stderr, "Error: conditional after pipe or in invalid position\n");
+
+            for (int j = 0; j < cmd->argc; j++) {
+                free(cmd->argv[j]);
+            }
+
             free(cmd);
             return;
         }
