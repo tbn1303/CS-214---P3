@@ -87,7 +87,7 @@ hi <br>
 
 and a file named output.txt should be created in the current directory. And running the commands: 
 
-echo foo > example.txt <br>
+mysh> echo foo > example.txt <br>
 mysh> cat < example.txt
 
 should produce the an output from the shell of:
