@@ -29,7 +29,7 @@ void parse_line(char *line, struct Job *job){
     if(strcmp(tokens[0], "and") == 0 || strcmp(tokens[0], "or") == 0){
         strncpy(job->operator, tokens[0], sizeof(job->operator) - 1);
         job->operator[sizeof(job->operator) - 1] = '\0';
-    } 
+    }
     
     else {
         job->operator[0] = '\0'; // No operator
@@ -73,6 +73,13 @@ void parse_line(char *line, struct Job *job){
                 free(cmd);
                 return;
             }
+        }
+
+        // Discard "and" or "or" appearing anywhere except tokens[0]
+        else if ((strcmp(tokens[i], "and") == 0 || strcmp(tokens[i], "or") == 0) && i != 0) {
+            fprintf(stderr, "Error: conditional after pipe or in invalid position\n");
+            free(cmd);
+            return;
         }
 
         else if(strcmp(tokens[i], "|") == 0){
