@@ -174,9 +174,10 @@ char *lines_next(LINES *l){
     lines_destroy(&line_reader);
 
     if (interactive_mode){
-        printf("Exiting my shell. \n");
+        printf("Mysh: exiting\n");
         fflush(stdout);
     }
 
     return shell_exit_status;
 }
+
