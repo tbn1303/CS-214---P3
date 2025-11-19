@@ -363,6 +363,4 @@ int execute_job(Job *job, int parent_stdout) {
     return last_status;
 }
 
-    return 0; // Job executed successfully
-}
 
