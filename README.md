@@ -73,3 +73,27 @@ example message <br>
 Exiting my shell.
 
 -----------------------------------------------------------------------------------------------------
+
+Test: redirection of output and input 
+
+The program should properly redirect ouput and input for '>' and '<' tokens respectively.For example if running the commands:
+
+mysh> echo hi > out.txt <br>
+mysh> cat out.txt
+
+the following output should be produced
+
+hi <br>
+
+and a file named output.txt should be created in the current directory. And running the commands: 
+
+echo foo > example.txt <br>
+mysh> cat < example.txt
+
+should produce the an output from the shell of:
+
+foo <br>
+
+with the file example.txt being created in the current directory. 
+
+-----------------------------------------------------------------------------------------------------
