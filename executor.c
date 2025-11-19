@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,7 +89,7 @@ static void redirect_io(Command *cmd) {
 
 // Execute a built-in command
 int execute_builtin(Command *cmd, int parent_stdout) {
-    for (int i = 0; bultin_commands[i] != NULL; i++) {
+    /* for (int i = 0; bultin_commands[i] != NULL; i++) {
         if (strcmp(cmd->argv[0], bultin_commands[i]) == 0) {
             // Handle cd command
             if (strcmp(cmd->argv[0], "cd") == 0) {
@@ -144,7 +143,73 @@ int execute_builtin(Command *cmd, int parent_stdout) {
         return 0; // Built-in command executed
     }
 
-    return 1; // Unknown built-in command
+    return 1; // Unknown built-in command*/
+
+    if (!cmd || !cmd->argv[0]) return 1;
+    const char *name = cmd->argv[0];
+    // cd 
+    if (strcmp(name, "cd") == 0) {
+        if (!parent_stdout) return 0; // subshell: do nothing and succeed 
+        if (cmd->argc != 2) { fprintf(stderr, "cd: wrong number of arguments\n"); return 1; }
+        if (chdir(cmd->argv[1]) != 0) { perror("cd"); return 1; }
+        return 0;
+    }
+    // pwd
+    if (strcmp(name, "pwd") == 0) {
+        char cwd[MAX_PATH];
+        if (getcwd(cwd, sizeof(cwd)) == NULL) { perror("pwd"); return 1; }
+        printf("%s\n", cwd);
+        return 0;
+    }
+    // which 
+    if (strcmp(name, "which") == 0) {
+        if (cmd->argc != 2) { fprintf(stderr, "which: wrong number of arguments\n"); return 1; }
+        // builtin names cause which to fail
+        const char *builtin_list[] = {"cd","pwd","which","exit","die", NULL};
+        for (int i = 0; builtin_list[i]; i++) if (strcmp(cmd->argv[1], builtin_list[i]) == 0) return 1;
+        char *p = executable_path(cmd->argv[1]);
+        if (!p) return 1;
+        printf("%s\n", p);
+        free(p);
+        return 0;
+    }
+    // exit + die 
+    if (strcmp(name, "exit") == 0 || strcmp(name, "die") == 0) {
+        if (!parent_stdout) {
+            // in child: just exit 
+            if (strcmp(name, "exit") == 0) exit(EXIT_SUCCESS);
+            else {
+                if (cmd->argc > 1) {
+                    for (int k = 1; k < cmd->argc; k++) {
+                        if (k > 1) fprintf(stderr, " ");
+                        fprintf(stderr, "%s", cmd->argv[k]);
+                    }
+                    fprintf(stderr, "\n");
+                }
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            // parent: request shell to exit 
+            extern int shell_signal_exit;
+            extern int shell_exit_status;
+            if (strcmp(name, "exit") == 0) {
+                shell_signal_exit = 1;
+                shell_exit_status = EXIT_SUCCESS;
+            } else {
+                if (cmd->argc > 1) {
+                    for (int k = 1; k < cmd->argc; k++) {
+                        if (k > 1) fprintf(stderr, " ");
+                        fprintf(stderr, "%s", cmd->argv[k]);
+                    }
+                    fprintf(stderr, "\n");
+                }
+                shell_signal_exit = 1;
+                shell_exit_status = EXIT_FAILURE;
+            }
+            return 0;
+        }
+    }
+    return 1; // unknown 
 }
 
 // Helper function to set up pipes for a command in a pipeline
@@ -277,5 +342,3 @@ int execute_job(Job *job, int parent_stdout) {
 
     return 0; // Job executed successfully
 }
-
-
