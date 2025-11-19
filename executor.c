@@ -234,6 +234,8 @@ static void close_pipes(int num_commands, int pipe_fds[MAX_COMMANDS*2]) {
 
 int execute_job(Job *job, int parent_stdout) {
     int num_commands = job->num_commands;
+    int last_status = 0;
+    
     if (num_commands > MAX_COMMANDS) {
         fprintf(stderr, "Error: too many commands in pipeline (max %d)\n", MAX_COMMANDS);
         return 1;
@@ -241,6 +243,19 @@ int execute_job(Job *job, int parent_stdout) {
 
     extern int shell_signal_exit;
     extern int shell_exit_status;
+
+    if (strcmp(job->operator, "and") == 0) {
+        if (last_status != 0) {
+            // Previous failed then skip execution
+            return last_status;
+        }
+    }
+    else if (strcmp(job->operator, "or") == 0) {
+        if (last_status == 0) {
+            // Previous succeeded then skip execution
+            return last_status;
+        }
+    }
 
     int pipe_fds[MAX_COMMANDS*2];  // Fixed-size array for pipes
 
@@ -336,9 +351,18 @@ int execute_job(Job *job, int parent_stdout) {
     close_pipes(num_commands, pipe_fds);
 
     // Wait for all child processes to finish
+    int status = 0;
     for (int i = 0; i < num_commands; i++) {
-        wait(NULL);
+        wait(&status);
+        if (WIFEXITED(status))
+            last_status = WEXITSTATUS(status);
+        else
+            last_status = 1;  // signal/crash → failure
     }
+
+    return last_status;
+}
 
     return 0; // Job executed successfully
 }
+
