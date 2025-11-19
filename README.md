@@ -69,6 +69,7 @@ Exiting my shell.
 or 
 
 mysh> die example message
+
 example message 
 Exiting my shell.
 
