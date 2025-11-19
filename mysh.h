@@ -16,6 +16,7 @@
 #define TOKEN_SIZE 128 // Size for tokenizing lines
 #define ARGS 64 // Maximum number of arguments
 #define MAX_PATH 4096 // Maximum path length
+#define MAX_COMMANDS 16 // Maximum number of commands in a job
 
 typedef struct Command {
     char *argv[ARGS];      // Argument list
@@ -29,6 +30,9 @@ typedef struct Job {
     int num_commands;        // Number of commands
     char operator[4];      // Operator such as "and", "or" or empty
 } Job;
+
+extern int shell_signal_exit; // Flag to indicate shell should exit
+extern int shell_exit_status; // Exit status to return when shell exits
 
 void parse_line(char *line, Job *job); // Parse input line into a Job structure
 void free_job(Job *job); // Free memory allocated for a Job structure
